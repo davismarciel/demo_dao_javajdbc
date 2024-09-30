@@ -73,22 +73,47 @@ public class SellerDaoJDBC implements SellerDao {
 
 	}
 
-	private Seller instantiateSeller(ResultSet rs, Department dep) throws SQLException {
-		Seller obj = new Seller();
-		obj.setId(rs.getInt("Id"));
-		obj.setName(rs.getString("Name"));
-		obj.setEmail(rs.getString("Email"));
-		obj.setBirthDate(rs.getDate("BirthDate"));
-		obj.setBaseSalary(rs.getDouble("BaseSalary"));
-		obj.setDepartment(dep);
-		return obj;
-	}
+	@Override
+	public List<Seller> findAll() {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.prepareStatement(
+					"SELECT seller.*,department.Name as DepName " + "FROM seller INNER JOIN department "
+							+ "ON seller.DepartmentId = department.Id " + "ORDER BY id ");
+			rs = st.executeQuery();
+			// Cria-se uma lista para armazenar os resultados
+			// Cria se um map para armazenar e checar se os departamentos existem ou não
+			List<Seller> list = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
 
-	private Department instantiateDepartment(ResultSet rs) throws SQLException {
-		Department dep = new Department();
-		dep.setId(rs.getInt("DepartmentId"));
-		dep.setName(rs.getString("DepName"));
-		return dep;
+			// Enquanto houver resultados no ResultSet
+			while (rs.next()) {
+				// Procurando na lista por algum departamento pelo ID
+				// (Notando que devo declarar dep sendo do tipo Department)
+				Department dep = map.get(rs.getInt("DepartmentId"));
+
+				// Se o departamento não existir (null)
+				if (dep == null) {
+					// Instância um novo objeto departament
+					dep = instantiateDepartment(rs);
+					// Adiciona o departamento no mapa, usando seu ID como chave
+					// Já que estamos utilizando o map
+					map.put(rs.getInt("DepartmentId"), dep);
+				}
+				// Se o departamento já existir, instância o seller com o departamento
+				// E adiciona na lista
+				Seller obj = instantiateSeller(rs, dep);
+				list.add(obj);
+			}
+			// Retorna a lista dos departaments e sellers
+			return list;
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeResultSet(rs);
+		}
 	}
 
 	@Override
@@ -98,7 +123,7 @@ public class SellerDaoJDBC implements SellerDao {
 		try {
 			st = conn.prepareStatement(
 					"SELECT seller.*,department.Name as DepName " + "FROM seller INNER JOIN department "
-							+ "ON seller.DepartmentId = department.Id " + "WHERE DepartmentId = ? " + "ORDER BY Name");
+							+ "ON seller.DepartmentId = department.Id " + "WHERE DepartmentId = ? " + "ORDER BY id");
 
 			st.setInt(1, department.getId());
 
@@ -137,10 +162,22 @@ public class SellerDaoJDBC implements SellerDao {
 		}
 	}
 
-	@Override
-	public List<Seller> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+	private Seller instantiateSeller(ResultSet rs, Department dep) throws SQLException {
+		Seller obj = new Seller();
+		obj.setId(rs.getInt("Id"));
+		obj.setName(rs.getString("Name"));
+		obj.setEmail(rs.getString("Email"));
+		obj.setBirthDate(rs.getDate("BirthDate"));
+		obj.setBaseSalary(rs.getDouble("BaseSalary"));
+		obj.setDepartment(dep);
+		return obj;
+	}
+
+	private Department instantiateDepartment(ResultSet rs) throws SQLException {
+		Department dep = new Department();
+		dep.setId(rs.getInt("DepartmentId"));
+		dep.setName(rs.getString("DepName"));
+		return dep;
 	}
 
 }

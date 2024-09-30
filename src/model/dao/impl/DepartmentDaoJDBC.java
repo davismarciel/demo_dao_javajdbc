@@ -14,7 +14,11 @@ import model.entities.Department;
 public class DepartmentDaoJDBC implements DepartmentDao {
 	
 	private Connection conn = null;
-
+	
+	public DepartmentDaoJDBC(Connection conn) {
+		this.conn = conn;
+	}
+	
 	@Override
 	public void insert(Department obj) {
 		// TODO Auto-generated method stub

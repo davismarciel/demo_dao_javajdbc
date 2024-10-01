@@ -97,12 +97,12 @@ public class SellerDaoJDBC implements SellerDao {
 			st = conn.prepareStatement("DELETE FROM seller WHERE Id = ?");
 
 			st.setInt(1, id);
-			
+
 			int rows = st.executeUpdate();
-			
-			if(rows == 0) {
+
+			if (rows == 0) {
 				throw new DbException("ID does not exist!");
-				
+
 			}
 
 		} catch (SQLException e) {
@@ -131,7 +131,6 @@ public class SellerDaoJDBC implements SellerDao {
 				Department dep = instantiateDepartment(rs);
 
 				Seller obj = instantiateSeller(rs, dep);
-
 				return obj;
 			}
 
